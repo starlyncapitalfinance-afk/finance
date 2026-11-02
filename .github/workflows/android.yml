@@ -1,4 +1,4 @@
-name: Build
+name: Build APK
 on:
   push: { branches: [ main ] }
   workflow_dispatch: {}
@@ -17,6 +17,7 @@ jobs:
         run: |
           npm install
           npx cap add android || true
+          npx @capacitor/assets generate --android --assetPath assets || true
           npx cap sync android
           yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses || true
           cd android && chmod +x gradlew && ./gradlew assembleDebug --no-daemon
@@ -24,9 +25,7 @@ jobs:
         with: { name: starlyn-finance-apk, path: app/android/app/build/outputs/apk/debug/*.apk }
   web:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+    environment: { name: github-pages, url: "${{ steps.deploy.outputs.page_url }}" }
     steps:
       - uses: actions/checkout@v4
       - run: unzip -o app.zip -d app
