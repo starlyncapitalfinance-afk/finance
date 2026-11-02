@@ -1,4 +1,4 @@
-name: Build APK
+name: Build
 on:
   push: { branches: [ main ] }
   workflow_dispatch: {}
@@ -22,3 +22,16 @@ jobs:
           cd android && chmod +x gradlew && ./gradlew assembleDebug --no-daemon
       - uses: actions/upload-artifact@v4
         with: { name: starlyn-finance-apk, path: app/android/app/build/outputs/apk/debug/*.apk }
+  web:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: unzip -o app.zip -d app
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: app/web }
+      - id: deploy
+        uses: actions/deploy-pages@v4
