@@ -15,7 +15,7 @@
 
 const SCHEMA_VERSION = 1;
 const MIN_CLIENT_SCHEMA = 1;
-const SYNCED = ["users", "centers", "loans", "weeks", "settings"];
+const SYNCED = ["users", "centers", "loans", "weeks", "settings", "eod"];
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
@@ -175,6 +175,56 @@ export default {
           results.push({ status: "ok" });
         }
         return json({ results });
+      }
+
+      // ---------- users management (admin) ----------
+      if (path === "/api/users" && req.method === "GET") {
+        if (!me || me.role !== "Admin") return err("admin only", 403);
+        const rs = await DB.prepare("SELECT id,name,username,role FROM users ORDER BY name").all();
+        return json({ users: rs.results || [] });
+      }
+      if (path === "/api/users" && req.method === "POST") {
+        if (!me || me.role !== "Admin") return err("admin only", 403);
+        const { name, username, password, role } = await req.json();
+        if (!username || !password) return err("username and password required");
+        const dup = await DB.prepare("SELECT id FROM users WHERE username=?").bind(username).first();
+        if (dup) return err("username already exists", 409);
+        const { hash, salt } = await hashPw(password);
+        const id = crypto.randomUUID();
+        const r = ["Admin", "Manager", "Staff", "Accountant", "Viewer"].includes(role) ? role : "Staff";
+        await DB.prepare(
+          "INSERT INTO users (id,name,username,pass,salt,role,token,updated_at,updated_by) VALUES (?,?,?,?,?,?,?,?,?)")
+          .bind(id, name || username, username, hash, salt, r, "", now(), me.id).run();
+        await mirrorUser(DB, { id, name: name || username, username, role: r });
+        return json({ ok: true, id });
+      }
+      if (path === "/api/users/update" && req.method === "POST") {
+        if (!me || me.role !== "Admin") return err("admin only", 403);
+        const { id, name, role, password } = await req.json();
+        const u = await DB.prepare("SELECT * FROM users WHERE id=?").bind(id).first();
+        if (!u) return err("not found", 404);
+        const newName = name != null ? name : u.name;
+        const newRole = ["Admin", "Manager", "Staff", "Accountant", "Viewer"].includes(role) ? role : u.role;
+        let pass = u.pass, salt = u.salt;
+        if (password) { const h = await hashPw(password); pass = h.hash; salt = h.salt; }
+        await DB.prepare("UPDATE users SET name=?, role=?, pass=?, salt=?, updated_at=?, updated_by=? WHERE id=?")
+          .bind(newName, newRole, pass, salt, now(), me.id, id).run();
+        await mirrorUser(DB, { id, name: newName, username: u.username, role: newRole });
+        return json({ ok: true });
+      }
+
+      // ---------- change own password ----------
+      if (path === "/api/password" && req.method === "POST") {
+        if (!me) return err("unauthorized", 401);
+        const { oldPassword, newPassword } = await req.json();
+        if (!newPassword) return err("new password required");
+        const u = await DB.prepare("SELECT * FROM users WHERE id=?").bind(me.id).first();
+        const { hash } = await hashPw(oldPassword || "", u.salt);
+        if (hash !== u.pass) return err("current password is wrong", 403);
+        const h = await hashPw(newPassword);
+        await DB.prepare("UPDATE users SET pass=?, salt=?, updated_at=? WHERE id=?")
+          .bind(h.hash, h.salt, now(), me.id).run();
+        return json({ ok: true });
       }
 
       // ---------- audit ----------
