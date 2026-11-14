@@ -15,7 +15,7 @@
 
 const SCHEMA_VERSION = 1;
 const MIN_CLIENT_SCHEMA = 1;
-const SYNCED = ["users", "centers", "loans", "weeks", "settings", "eod"];
+const SYNCED = ["users", "centers", "groups", "loans", "weeks", "settings", "eod"];
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
@@ -78,7 +78,7 @@ export default {
       // ---------- status ----------
       if (path === "/api/status" && req.method === "GET") {
         const c = await DB.prepare("SELECT COUNT(*) n FROM users").first();
-        return json({ ok: true, users: c.n, hasAdmin: c.n > 0, schemaVersion: SCHEMA_VERSION });
+        return json({ ok: true, users: c.n, hasAdmin: c.n > 0, schemaVersion: SCHEMA_VERSION, tables: SYNCED });
       }
 
       // ---------- first-admin setup ----------
