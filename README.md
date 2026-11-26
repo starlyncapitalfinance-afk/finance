@@ -1,6 +1,6 @@
 # Sri Finance JLG — web + Android app (offline-first, cloud synced)
 
-Same concept as your ZYFM app:
+Same concept as your ZYFMas app:
 
 - **One codebase** (`web/`, plain HTML/JS — a PWA) → runs as the **web app** and,
   wrapped with **Capacitor**, as the **Android APK**.
