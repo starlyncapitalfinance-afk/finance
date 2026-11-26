@@ -1,36 +1,49 @@
-name: Build APK
+name: Build Android APK
 on:
   push: { branches: [ main ] }
   workflow_dispatch: {}
-permissions: { contents: read, pages: write, id-token: write }
+
 jobs:
-  apk:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: unzip -o app.zip -d app
+
+      - name: Unzip app.zip
+        run: |
+          set -e
+          test -f app.zip || { echo "ERROR: app.zip not found in repo root"; exit 1; }
+          rm -rf _build && mkdir _build
+          unzip -q app.zip -d _build
+          test -f _build/package.json || { echo "ERROR: package.json missing in app.zip"; exit 1; }
+          test -f _build/capacitor.config.json || { echo "ERROR: capacitor.config.json missing in app.zip"; exit 1; }
+
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: '17' }
-      - working-directory: app
-        run: |
-          npm install
-          npx cap add android || true
-          npx @capacitor/assets generate --android --assetPath assets || true
-          npx cap sync android
-          yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses || true
-          cd android && chmod +x gradlew && ./gradlew assembleDebug --no-daemon
-      - uses: actions/upload-artifact@v4
-        with: { name: starlyn-finance-apk, path: app/android/app/build/outputs/apk/debug/*.apk }
-  web:
-    runs-on: ubuntu-latest
-    environment: { name: github-pages, url: "${{ steps.deploy.outputs.page_url }}" }
-    steps:
-      - uses: actions/checkout@v4
-      - run: unzip -o app.zip -d app
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with: { path: app/web }
-      - id: deploy
-        uses: actions/deploy-pages@v4
+
+      - name: Install deps
+        working-directory: _build
+        run: npm install
+
+      - name: Add Android platform
+        working-directory: _build
+        run: npx cap add android || true
+
+      - name: Sync web into Android
+        working-directory: _build
+        run: npx cap sync android
+
+      - name: Accept SDK licenses
+        run: yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses || true
+
+      - name: Build debug APK
+        working-directory: _build
+        run: cd android && chmod +x gradlew && ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: starlyn-finance-apk
+          path: _build/android/app/build/outputs/apk/debug/*.apk
