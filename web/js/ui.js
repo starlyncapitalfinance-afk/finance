@@ -1390,10 +1390,12 @@ const UI = {
 
       <div class="eodsec s1">
         <div class="eodtitle"><span class="eodnum">1</span> Expected Collection Summary</div>
-        <div class="eodrow"><span>Opening Cash (prev day)</span>${money('a-open', auto.opening, 1)}</div>
-        <div class="eodrow"><span>Today's EMI Expected</span>${money('a-emiexp', auto.emiExpected, 1)}</div>
-        <div class="eodrow"><span>Overdue Amount</span>${money('a-overdue', auto.overdue, 1)}</div>
-        <div class="eodrow tot"><span>Total Expected Amount</span>${money('a-texp', auto.opening + auto.emiExpected + auto.overdue, 1)}</div>
+        <div class="etiles">
+          <div class="etile"><div class="el">Opening Cash</div><div class="ev" id="a-open">₹ ${Core.inr(auto.opening)}</div></div>
+          <div class="etile"><div class="el">Today's EMI Expected</div><div class="ev" id="a-emiexp">₹ ${Core.inr(auto.emiExpected)}</div></div>
+          <div class="etile"><div class="el">Overdue Amount</div><div class="ev" id="a-overdue">₹ ${Core.inr(auto.overdue)}</div></div>
+          <div class="etile tot"><div class="el">Total Expected</div><div class="ev" id="a-texp">₹ ${Core.inr(auto.opening + auto.emiExpected + auto.overdue)}</div></div>
+        </div>
       </div>
 
       <div class="eodgrid2">
@@ -1416,15 +1418,16 @@ const UI = {
 
       <div class="eodsec s5">
         <div class="eodtitle"><span class="eodnum">4</span> Cash Denomination Tally</div>
-        ${DEN.map((d) => `<div class="eodrow den"><span>₹${d} ×</span><input class="dcount" data-d="${d}" value="${st.denom[d] || 0}" inputmode="numeric" style="max-width:90px"/><span class="damt" id="damt-${d}">₹ 0.00</span></div>`).join('')}
-        <div class="eodrow den"><span>Coins (amount)</span><input class="dcount" data-d="coins" value="${st.denom.coins || 0}" inputmode="decimal" style="max-width:90px"/><span class="damt" id="damt-coins">₹ 0.00</span></div>
+        <div class="denomgrid">
+          ${DEN.map((d) => `<div class="dcell"><div class="dlab">₹${d}</div><input class="dcount" data-d="${d}" value="${st.denom[d] || 0}" inputmode="numeric"/><div class="damt" id="damt-${d}">₹ 0.00</div></div>`).join('')}
+          <div class="dcell"><div class="dlab">Coins</div><input class="dcount" data-d="coins" value="${st.denom.coins || 0}" inputmode="decimal"/><div class="damt" id="damt-coins">₹ 0.00</div></div>
+        </div>
         <div class="eodrow tot"><span>Denomination Total</span>${money('a-dentot', 0, 1)}</div>
       </div>
 
       <div class="eodsec s6">
-        <div class="eodtitle"><span class="eodnum">5</span> Cash in Hand</div>
-        <div class="cih" id="a-cih">₹ 0.00</div>
-        <div id="a-tally" style="margin-top:4px"></div>
+        <div class="cihleft"><span class="eodtitle" style="margin:0"><span class="eodnum">5</span> Cash in Hand</span><span class="cih" id="a-cih">₹ 0.00</span></div>
+        <div id="a-tally"></div>
       </div>
 
       <div class="eodbtns">
@@ -1463,13 +1466,14 @@ const UI = {
       const tally = Math.abs(denTot - cih) < 0.01;
       const cihEl = $('#a-cih');
       cihEl.textContent = '₹ ' + Core.inr(cih);
-      cihEl.style.color = tally ? '#059669' : '#DC2626';
+      cihEl.style.color = '#fff';
       const te = $('#a-tally');
+      const pill = (bg, color, txt) => `<span style="background:${bg};color:${color};font-weight:800;font-size:12.5px;padding:6px 12px;border-radius:9px;white-space:nowrap">${txt}</span>`;
       if (te) te.innerHTML = (denTot === 0 && Math.abs(cih) > 0.01)
-        ? '<span style="color:#9AA3B5;font-size:12px">Count the cash below (denomination) to verify</span>'
+        ? pill('rgba(255,255,255,.22)', '#fff', 'Count cash to verify')
         : (tally
-            ? '<span style="color:#059669;font-weight:700;font-size:13px">✓ Tallied — denomination matches cash in hand</span>'
-            : '<span style="color:#DC2626;font-weight:700;font-size:13px">✗ Mismatch: ' + (denTot - cih >= 0 ? '+' : '') + Core.inr(denTot - cih) + ' (denomination vs cash)</span>');
+            ? pill('#fff', '#059669', '✓ Tallied')
+            : pill('#fff', '#DC2626', '✗ ' + (denTot - cih >= 0 ? '+' : '') + Core.inr(denTot - cih)));
       st._computed = { cashIn, cashOut, expTot, denTot, cih, disbursed, ...auto, date: dateStr };
     };
 

@@ -751,14 +751,32 @@ h2, .dval, .top .title{ letter-spacing:-.02em }
 .s4 .eodrow.tot>span,.s4 .eodrow.tot .eodin.ro{color:#F04E78}
 .s5 .eodrow.tot>span,.s5 .eodrow.tot .eodin.ro{color:#F2840F}
 
-/* denomination */
-.s5 .eodrow.den{padding:7px 0}
-.s5 .damt{font-weight:700;color:#fff}
+/* ---- COMPACT EOD (fits one screen) ---- */
+.eodsec{padding:12px 14px;margin-bottom:11px}
+.eodtitle{font-size:13px;margin-bottom:10px}
+.eodgrid2{gap:11px;align-items:start}
 
-/* section 6 — cash in hand hero */
-.eodsec.s6 .eodtitle{color:#fff;margin-bottom:6px}
-.eodsec.s6 .cih{font-size:34px;font-weight:800;color:#fff;letter-spacing:-.5px}
-.eodsec.s6 #a-tally span{color:#fff !important}
+/* section 1 — inline tiles */
+.etiles{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.etile{background:rgba(255,255,255,.16);border-radius:10px;padding:9px 11px}
+.etile .el{font-size:10.5px;color:#fff;opacity:.9;line-height:1.25}
+.etile .ev{font-size:16px;font-weight:800;color:#fff;margin-top:3px}
+.etile.tot{background:#fff}
+.etile.tot .el{color:#6D5BF0;opacity:1}
+.etile.tot .ev{color:#6D5BF0}
+
+/* section 4 — denomination grid */
+.denomgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.dcell{background:rgba(255,255,255,.14);border-radius:9px;padding:7px 8px;text-align:center}
+.dcell .dlab{font-size:11px;font-weight:800;color:#fff;margin-bottom:4px}
+.dcell .dcount{width:100%;text-align:center;padding:4px;border-radius:6px;font-size:12.5px}
+.dcell .damt{font-size:10px;color:#fff;opacity:.92;margin-top:3px}
+
+/* section 6 — slim cash-in-hand bar */
+.eodsec.s6{flex-direction:row;align-items:center;justify-content:space-between;padding:11px 15px}
+.cihleft{display:flex;align-items:center;gap:13px}
+.eodsec.s6 .eodtitle{color:#fff}
+.eodsec.s6 .cih{font-size:26px;font-weight:800;color:#fff;letter-spacing:-.4px}
 
 /* status + buttons */
 .eodstatus.op{background:#E7F6EF;color:#059669}
@@ -769,7 +787,9 @@ h2, .dval, .top .title{ letter-spacing:-.02em }
   .dgrid{grid-template-columns:1fr 1fr}
   .dash-bottom{grid-template-columns:1fr !important}
   .eodgrid2{grid-template-columns:1fr !important}
+  .etiles{grid-template-columns:1fr 1fr}
 }
+@media(max-width:440px){ .denomgrid{grid-template-columns:repeat(3,1fr)} }
 @media(max-width:420px){ .dgrid{grid-template-columns:1fr 1fr} }
 
 /* vibrant gradient KPI cards (color comes inline per card) */
